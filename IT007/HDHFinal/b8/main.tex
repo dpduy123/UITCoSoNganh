@@ -1,0 +1,171 @@
+\clearpage
+\section{Kết quả và kiểm thử (Results and Testing)}
+\subsection{Một số lệnh cơ bản}
+\begin{itemize}
+    \item \textbf{Lệnh \texttt{ls}:} \\
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{b8/11.png}
+\end{figure}
+\noindent
+\textbf{Kết quả:} Danh sách các tệp và thư mục trong thư mục hiện tại được in ra.
+
+    \item \textbf{Lệnh \texttt{cat Hocsinh}:} \\
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\linewidth]{b8/12.png}
+\end{figure}
+\noindent
+\textbf{Kết quả:} Nội dung trong tệp "Hocsinh" được in ra.
+
+    \item \textbf{Lệnh \texttt{sort Hocsinh}:} \\
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\linewidth]{b8/13.png}
+\end{figure}
+\noindent
+\textbf{Kết quả:} Nội dung trong tệp "Hocsinh" được sắp xếp theo dòng và in ra.
+
+     \item \textbf{Lệnh \texttt{pwd}:} \\
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.7\linewidth]{b8/14.png}
+    \end{figure}
+    \noindent
+    \textbf{Kết quả:} Đường dẫn của thư mục hiện tại được hiển thị.
+
+    \item \textbf{Lệnh \texttt{echo Test Shell}:} \\
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.7\linewidth]{b8/15.png}
+    \end{figure}
+    \noindent
+    \textbf{Kết quả:} Chuỗi \texttt{Test Shell} được in ra màn hình.
+
+    \item \textbf{Lệnh \texttt{exit}:} \\
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.7\linewidth]{b8/16.png}
+    \end{figure}
+    \noindent
+    \textbf{Kết quả:} Thoát khỏi chương trình \texttt{Shell}.
+\end{itemize}
+\subsection{Chức năng chạy nền}
+\begin{itemize}
+    \item \textbf{Lệnh \texttt{ls \&}:} \\
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=1\linewidth]{b8/21.png}
+    \end{figure}
+    \noindent
+    \textbf{Kết quả:} Lệnh \texttt{ls} chạy nền: số thứ tự của tiến trình chạy nền (background job), process ID (PID) của tiến trình và danh sách tệp, thư mục  trong thư mục hiện tại được in ra. Do cơ chế chạy nền, dấu nhắc lệnh \texttt{osh>} được in ra khi lệnh \texttt{ls} chưa thực hiện xong.
+
+    \item \textbf{Lệnh \texttt{echo "Background" \&}:} \\
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.7\linewidth]{b8/22.png}
+    \end{figure}
+    \noindent
+    \textbf{Kết quả:} Chuỗi \texttt{"Background"}, số thứ tự của tiến trình chạy nền (background job) và process ID (PID) được in ra màn hình. Do cơ chế chạy nền, dấu nhắc lệnh \texttt{osh>} được in ra khi lệnh chưa thực hiện xong.
+
+    \item \textbf{Lệnh \texttt{pwd \&}:} \\
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.7\linewidth]{b8/23.png}
+    \end{figure}
+    \noindent
+    \textbf{Kết quả:} Số thứ tự của tiến trình chạy nền (background job), process ID (PID) và đường dẫn của thư mục hiện tại được hiển thị. 
+
+    \item \textbf{Lệnh \texttt{cat Hocsinh \&}:} \\
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\linewidth]{b8/24.png}
+\end{figure}
+\noindent
+\textbf{Kết quả:} Số thứ tự của tiến trình chạy nền (background job), process ID (PID) và nội dung trong tệp "Hocsinh" được in ra.
+    
+\end{itemize}
+
+\subsection{Chức năng lịch sử}
+\begin{itemize}
+    \item \textbf{Lệnh \texttt{!!}:} (Trong lịch sử là lệnh \texttt{ls \&}) \\
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=1\linewidth]{b8/31.png}
+    \end{figure}
+    \noindent
+    \textbf{Kết quả:} Lệnh gần nhất trong lịch sử (lệnh \texttt{ls \&}) được thực thi lại.
+
+    \item \textbf{Lệnh \texttt{!! \&}:} (Trong lịch sử là lệnh \texttt{cat Hocsinh}) \\
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=1\linewidth]{b8/32.png}
+    \end{figure}
+    \noindent
+    \textbf{Kết quả:} Lệnh gần nhất trong lịch sử (lệnh \texttt{cat Hocsinh}) được thực thi lại và chạy nền.
+
+    \item \textbf{Lệnh \texttt{!! \&}:} (Trong lịch sử là lệnh \texttt{sort Hocsinh \&}) \\
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=1\linewidth]{b8/33.png}
+    \end{figure}
+    \noindent
+    \textbf{Kết quả:} Chương trình thông báo "Error: command \& \&" do lệnh gần nhất trong lịch sử (lệnh \texttt{sort Hocsinh \&}) đã có chạy nền và lệnh \texttt{!! \&} cũng có chạy nền.
+    
+\end{itemize}
+
+\subsection{Chức năng chuyển hướng đầu vào/ra}
+\begin{itemize}
+     \item \textbf{Lệnh \texttt{echo "Hello" > hello.txt}:} \\
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=1\linewidth]{b8/41.png}
+    \end{figure}
+    \noindent
+    \textbf{Kết quả:} Chuỗi \texttt{"Hello"} được lưu vào tệp \texttt{hello.txt}.
+
+    \item \textbf{Lệnh \texttt{cat < Hocsinh}:} \\
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=1\linewidth]{b8/42.png}
+    \end{figure}
+    \noindent
+    \textbf{Kết quả:} Nội dung của tệp \texttt{Hocsinh} được hiển thị trên màn hình.
+
+     \item \textbf{Lệnh \texttt{sort < Hocsinh > HSsorted.txt}:} \\
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=1\linewidth]{b8/43.png}
+    \end{figure}
+    \noindent
+    \textbf{Kết quả:} Nội dung của tệp \texttt{Hocsinh} được sắp xếp và lưu vào \texttt{HSsorted.txt}.
+
+    \item \textbf{Lệnh \texttt{echo TestShell > T.txt \&}:} \\
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=1\linewidth]{b8/44.png}
+    \end{figure}
+    \noindent
+    \textbf{Kết quả:} Lệnh có thực hiện chạy nền: Số thứ tự của tiến trình chạy nền (background job), process ID (PID) và chuỗi \texttt{TestShell} được ghi vào tệp \texttt{T.txt}.
+
+\end{itemize}
+\subsection{Chức năng giao tiếp qua pipe}
+\begin{itemize}
+    \item \textbf{Lệnh \texttt{ls | sort}:} \\
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=1\linewidth]{b8/51.png}
+    \end{figure}
+    \noindent
+    \textbf{Kết quả:} Danh sách các tệp/thư mục được sắp xếp theo thứ tự bảng chữ cái và hiển thị.
+
+    \item \textbf{Lệnh \texttt{ls | grep ".txt"}:} \\
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=1\linewidth]{b8/52.png}
+    \end{figure}
+    \noindent
+    \textbf{Kết quả:} Danh sách các tệp có phần mở rộng .txt được in ra.
+
+
+\end{itemize}

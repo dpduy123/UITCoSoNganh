@@ -1,0 +1,173 @@
+\clearpage
+\section{Executing Command in a Child Process}
+\subsection{Yêu cầu cụ thể}
+\subsubsection{Đề bài}
+\begin{tcolorbox}[
+  colback=blue!5!white, 
+  colframe=blue!75!black, 
+  title=Task 1, 
+  attach boxed title to top center={
+    yshift=-2mm
+  },
+  boxrule=0.5mm,
+  width=\textwidth,
+  bottomtitle=0.5mm
+]
+
+The first task is to modify the \texttt{main()} function in Figure 3.36 so that a child
+process is forked and executes the command specified by the user. This will
+require parsing what the user has entered into separate tokens and storing the
+tokens in an array of character strings (\texttt{args} in Figure 3.36). For example, if the
+user enters the command \texttt{ps -ael} at the \texttt{osh>} prompt, the values stored in the
+\texttt{args} array are:
+
+\begin{center}
+\texttt{args[0] = "ps"}\\
+\texttt{args[1] = "-ael"}\\
+\texttt{args[2] = NULL}
+\end{center}
+
+This args array will be passed to the \texttt{execvp()} function, which has the following prototype:
+\begin{center}
+\texttt{execvp(char *command, char *params[])}
+\end{center}
+Here, command represents the command to be performed and params stores the
+parameters to this command. For this project, the \texttt{execvp()} function should
+be invoked \texttt{as execvp(args[0], args)}. Be sure to check whether the user
+included \texttt{\&} to determine whether or not the parent process is to wait for the
+child to exit.
+
+\begin{flushright}
+\textit{Page 200, Operating System Concepts 10th Edition}
+\end{flushright}
+
+\end{tcolorbox}
+\subsubsection{Mô tả đề bài}
+Ta có thể hiểu đề bài đưa ra các yêu cầu như sau:
+\begin{enumerate} \item Chỉnh sửa hàm \texttt{main()} ở Hình 3.36 để sinh ra chương trình con thực hiện các câu lệnh do người dùng chỉ định thông qua việc sử dụng \texttt{execvp(args[0], args)}. Sau khi người dùng nhập lệnh, hàm \texttt{fork()} sẽ tạo ra một tiến trình con, và trong tiến trình con, \texttt{execvp()} sẽ thực thi lệnh với các tham số được phân tích từ chuỗi đầu vào.
+
+\item Để sử dụng lệnh \texttt{execvp} như trên, ta phân tích chuỗi lệnh đầu vào từ người dùng và lưu các thành phần lệnh vào mảng \texttt{args}. Cần chia chuỗi input thành các token dựa trên khoảng trắng, sau đó lưu từng token vào các phần tử của mảng \texttt{args}, với phần tử cuối cùng là \texttt{NULL} để đánh dấu kết thúc mảng. Ví dụ, nếu người dùng nhập \texttt{"ps -ael"}, mảng \texttt{args} sẽ chứa \texttt{args[0] = "ps", args[1] = "-ael", và args[2] = NULL}.
+
+\item Cần kiểm tra xem người dùng có bao gồm ký tự \texttt{\&} trong lệnh hay không để xác định liệu tiến trình cha có phải chờ đợi tiến trình con thoát hay không. Nếu lệnh chứa ký tự \texttt{\&}, tiến trình cha sẽ không chờ đợi tiến trình con kết thúc (lệnh chạy nền), ngược lại, tiến trình cha sẽ chờ đợi tiến trình con thông qua \texttt{wait()}.
+\end{enumerate}
+
+\subsection{Hướng giải quyết}
+\begin{enumerate} 
+\item Sinh ra chương trình con và thực thi lệnh với \texttt{execvp()}: Viết hàm \texttt{executeCommand()} để đưa vào hàm \texttt{main}. Trong đó, ta sẽ sử dụng \texttt{fork()} để tạo tiến trình con và chạy câu lệnh trong tiến trình con. Lưu ý, Trong tiến trình cha, nếu lệnh không có ký tự \texttt{\&}, chương trình cha sẽ chờ tiến trình con kết thúc bằng cách gọi \texttt{waitpid()}. Nếu có ký tự \texttt{\&}, tiến trình cha không cần chờ đợi và tiếp tục thực hiện các tác vụ khác.Chi tiết về hàm \texttt{executeCommand()} được mô tả ở mục \textbf{3} cùng chương.
+
+
+\item Phân tích chuỗi lệnh và lưu vào mảng \texttt{args}: Viết hàm \texttt{parseInput} dùng \texttt{strtok()} để phân tách chuỗi lệnh đầu vào thành các token, lưu vào mảng \texttt{args}. Mảng này sẽ chứa từng phần tử lệnh và phần tử cuối cùng là \texttt{NULL}. Chi tiết về hàm \texttt{strtok()} được mô tả ở mục \textbf{4} cùng chương.
+
+\item Kiểm tra ký tự \texttt{\&} và quyết định chờ tiến trình con: Chương trình kiểm tra sự xuất hiện của ký tự \texttt{\&} trong mảng \texttt{args}, và dùng biến \texttt{background} đại diện cho việc kí tự có xuất hiện hay không. Nếu có \texttt{\&}, lệnh sẽ chạy nền và tiến trình cha không chờ tiến trình con (không gọi \texttt{wait()}), đồng thời biến \texttt{background} mang giá trị 1. Nếu không có \texttt{\&}, tiến trình cha sẽ chờ tiến trình con kết thúc và biến \texttt{background} mang giá trị 0.
+\end{enumerate}
+
+\subsection{Hàm executeCommand - thực thi lệnh}
+\subsubsection{Input}
+Hàm \texttt{executeCommand()} nhận hai tham số:
+\begin{itemize}
+    \item \texttt{args[]}: Một mảng chuỗi ký tự đã được phân tích từ chuỗi lệnh người dùng nhập vào. Mảng này chứa các phần tử của lệnh, với phần tử cuối cùng là \texttt{NULL} để đánh dấu kết thúc mảng.
+    \item \texttt{background}: Một biến kiểu \texttt{int}, nếu lệnh có chứa ký tự \texttt{\&}, giá trị của \texttt{background} sẽ được đặt là 1, ngược lại là 0. Biến này xác định liệu tiến trình cha có cần chờ đợi tiến trình con kết thúc hay không.
+\end{itemize}
+
+\subsubsection{Output}
+Hàm không trả về giá trị, nhưng có thể thay đổi trạng thái tiến trình con hoặc tiến trình cha. Nếu lệnh thực thi thành công, chương trình con sẽ thay thế tiến trình hiện tại để thực thi lệnh người dùng nhập vào. Nếu thất bại, thông báo lỗi sẽ được in ra và tiến trình con sẽ kết thúc.
+
+\subsubsection{Hướng giải thuật giải quyết}
+Hàm \texttt{executeCommand()} thực hiện các bước sau để xử lý lệnh người dùng:
+\begin{enumerate} 
+    \item \textbf{Kiểm tra ký tự \&}: Trước khi thực thi lệnh, kiểm tra xem lệnh có chứa ký tự \texttt{\&}. Nếu có, đặt giá trị của \texttt{background} là 1, nghĩa là tiến trình cha không cần phải chờ đợi tiến trình con. 
+    \item \textbf{Sinh tiến trình con}:         \begin{itemize} 
+            \item Sử dụng \texttt{fork()} để tạo ra một tiến trình con. 
+            \item Kiểm tra giá trị trả về của \texttt{fork()}:                  \begin{itemize} 
+                    \item Nếu giá trị trả về là 0, đây là tiến trình con. 
+                    \item Nếu giá trị trả về dương, đây là tiến trình cha. 
+                    \item Nếu giá trị trả về âm, tiến trình cha không thể tạo tiến trình con do lỗi hệ thống. Lúc này, hàm \texttt{perror("Fork failed");} sẽ được gọi để in ra thông báo lỗi, và chương trình cha sẽ kết thúc. 
+                \end{itemize}
+        \end{itemize} 
+    \item \textbf{Tiến hành thực thi lệnh trong tiến trình con}: Trong tiến trình con, gọi \texttt{execvp(args[0], args)} để thay thế tiến trình con hiện tại bằng tiến trình mới thực thi lệnh người dùng nhập vào. Nếu \texttt{execvp()} thất bại, in thông báo lỗi và thoát tiến trình con. 
+    \item \textbf{Quản lý tiến trình cha}: Trong tiến trình cha: 
+        \begin{itemize} 
+            \item Nếu \texttt{background} bằng 0 (không có ký tự \texttt{\&}), chương trình cha sẽ gọi \texttt{waitpid()} để chờ đợi tiến trình con kết thúc. 
+            \item Nếu \texttt{background} bằng 1 (có ký tự \texttt{\&}), chương trình cha sẽ không chờ đợi và tiếp tục thực hiện các tác vụ khác. 
+        \end{itemize} 
+    \item \textbf{Xử lý lỗi}: Nếu \texttt{execvp()} thất bại trong tiến trình con, một thông báo lỗi sẽ được in ra và tiến trình con sẽ kết thúc.
+\end{enumerate}
+
+
+
+\subsubsection{Lưu đồ thuật toán}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{executecmd.png}
+\end{figure}
+\newpage
+\subsubsection{Code}
+\begin{lstlisting}
+void executeCommand(char **args, int background) {
+    pid_t pid = fork();
+    if (pid == 0) { 
+        execvp(args[0], args);
+        perror("Error executing command");
+        exit(1);
+    } else if (pid > 0) { 
+        if (!background) { 
+            waitpid(pid, NULL, 0);
+        }
+        else { 
+            backgroundJobCounter++;
+            printf("[%d] %d\n", backgroundJobCounter, pid); 
+        }
+    } else {
+        perror("Fork failed");
+    }
+}
+
+\end{lstlisting}
+
+
+
+
+
+
+\subsection{Hàm parseInput - phân tích câu lệnh}
+\subsubsection{Input}
+Một chuỗi ký tự chứa lệnh do người dùng nhập vào, ví dụ: \texttt{"ps -ael"}. Chuỗi này có thể chứa nhiều thành phần, được phân tách bởi khoảng trắng.
+
+\subsubsection{Output}
+Hàm không trả về giá trị nhưng sẽ thay đổi nội dung mảng \texttt{args} thông qua tham chiếu. Trong đó, mỗi phần tử của mảng chuỗi ký tự \texttt{args} chứa một phần của lệnh và phần tử cuối cùng là \texttt{NULL} dùng để đánh dấu kết thúc mảng. \\
+Ví dụ: Đưa lệnh \texttt{"ps -ael"} vào hàm, sau khi chạy, mảng \texttt{args} lúc này bao gồm: 
+
+\begin{center}
+\texttt{args[0] = "ps"}, \quad \texttt{args[1] = "-ael"}, \quad \texttt{args[2] = NULL}
+\end{center}
+
+\subsubsection{Hướng giải thuật giải quyết}
+Chúng ta sẽ dùng hàm \texttt{strtok()} để tách chuỗi input thành các token dựa trên khoảng trắng, sau đó lưu từng token vào mảng \texttt{args}. Vòng lặp dừng khi không còn token, và NULL được thêm vào cuối mảng để đánh dấu kết thúc. Sau đây là chi tiết các bước:
+\begin{enumerate}
+    \item \textbf{Khởi tạo}: Đặt con trỏ đầu tiên \texttt{args[0]} trỏ đến token đầu tiên của chuỗi \texttt{input}, bằng cách sử dụng hàm \texttt{strtok()} với ký tự phân tách là \texttt{" "} (khoảng trắng).
+    \item \textbf{Vòng lặp phân tích}: 
+        \begin{itemize}
+            \item Sử dụng vòng lặp \texttt{while} để tiếp tục phân tích các token còn lại trong chuỗi \texttt{input}.
+            \item Mỗi lần lặp, tăng \texttt{i} một đơn vị và hàm \texttt{strtok(NULL, " ")} được gọi để lấy token tiếp theo và lưu vào \texttt{args[i]}.
+        \end{itemize}
+    \item \textbf{Kết thúc}: Khi không còn token nào trong chuỗi, hàm \texttt{strtok()} trả về \texttt{NULL}, vòng lặp dừng, và \texttt{args[i]} được đặt là \texttt{NULL} để đánh dấu kết thúc mảng.
+\end{enumerate}
+
+
+\subsubsection{Lưu đồ thuật toán}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{phantichlenh.png}
+\end{figure}
+
+\subsubsection{Code}
+\begin{lstlisting}
+void parseInput(char *input, char **args) {
+    int i = 0;
+    args[i] = strtok(input, " ");
+    while (args[i] != NULL) {
+        i++;
+        args[i] = strtok(NULL, " ");
+    }
+}
+\end{lstlisting}

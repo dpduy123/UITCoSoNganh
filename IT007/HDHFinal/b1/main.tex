@@ -1,0 +1,27 @@
+\clearpage
+% \chapter*{Tóm tắt khóa luận}
+\section{Giới Thiệu Project}
+% \addcontentsline{toc}{chapter}{Giới Thiệu Project}
+\subsection{Mô tả tổng quan về project}
+Dự án "UNIX Shell Implementation" nhằm xây dựng một giao diện shell đơn giản trong ngôn ngữ C. Shell sẽ hoạt động như một trình thông dịch lệnh (command-line interpreter), cho phép người dùng nhập các lệnh UNIX, thực thi chúng trong các tiến trình riêng biệt, và hiển thị kết quả trên màn hình. Giao diện shell này mô phỏng cách hoạt động của các shell thông dụng như bash, nhưng ở mức độ cơ bản hơn.
+\subsection{Các tính năng chính mà shell sẽ hỗ trợ}
+\begin{itemize}
+    \item Thực thi lệnh trong tiến trình con: Shell sẽ tạo tiến trình con bằng lệnh fork() và thực thi các lệnh do người dùng nhập thông qua execvp(). Và ngoài ra nếu các lệnh có ký tự \& ở cuối sẽ được chạy ở chế độ nền (background)
+
+\item Hỗ trợ lịch sử lệnh (History): Người dùng có thể thực thi lại lệnh gần nhất bằng cách nhập !!.
+
+\item Chuyển hướng đầu vào và đầu ra: Hỗ trợ chuyển hướng đầu vào (<) và đầu ra (>).
+
+\item Giao tiếp giữa các tiến trình qua pipe: Cho phép sử dụng ký tự | để truyền dữ liệu từ lệnh này sang lệnh khác (ví dụ: ls -l | less).
+
+\end{itemize}
+
+\subsection{Giải pháp cho từng tính năng}
+Ý tưởng cũng như giải pháp cho lần lượt từng tính năng sẽ được đề cập đến trong các chương:
+\begin{itemize}
+    \item \textbf{Chương 3 :} Executing Command in a Child Process
+    \item \textbf{Chương 4 :} Creating a History Feature
+    \item \textbf{Chương 5 :} Redirecting Input and Output
+    \item \textbf{Chương 6 :} Communication via a Pipe
+\end{itemize}
+    Bên cạnh đó, chúng em cũng đưa ra các testcase và demo source code lần lượt ở \textbf{Chương 7} và \textbf{Chương 8}.

@@ -1,0 +1,54 @@
+DROP TRIGGER IF EXISTS EnsureFriendSymmetry_Insert;
+DROP TRIGGER IF EXISTS EnsureFriendSymmetry_Delete;
+DROP TRIGGER IF EXISTS CheckExist;
+DROP TRIGGER IF EXISTS EnsureFriendSymmetry_Update;
+DROP TRIGGER IF EXISTS CheckUpdateExist;
+PRAGMA recursive_triggers = OFF;
+
+CREATE TRIGGER CheckExist
+BEFORE INSERT ON Friend
+FOR EACH ROW
+BEGIN
+    SELECT RAISE(ABORT, 'Data already exists')
+    WHERE EXISTS (
+        SELECT * FROM Friend WHERE ID1 = NEW.ID1 AND ID2 = NEW.ID2
+    );
+END;
+
+
+CREATE TRIGGER EnsureFriendSymmetry_Insert
+AFTER INSERT ON Friend
+FOR EACH ROW
+BEGIN
+    INSERT OR IGNORE INTO Friend(ID1, ID2)
+    VALUES (NEW.ID2, NEW.ID1);
+END;
+
+CREATE TRIGGER EnsureFriendSymmetry_Delete
+AFTER DELETE ON Friend
+FOR EACH ROW
+BEGIN
+    DELETE FROM Friend
+    WHERE ID1 = OLD.ID2 AND ID2 = OLD.ID1;
+END;
+
+CREATE TRIGGER CheckUpdateExist
+BEFORE INSERT ON Friend
+FOR EACH ROW
+BEGIN
+    SELECT RAISE(ABORT, 'Unable to update due to data already exists')
+    WHERE EXISTS (
+        SELECT * FROM Friend WHERE ID1 = NEW.ID1 AND ID2 = NEW.ID2
+    );
+END;
+CREATE TRIGGER EnsureFriendSymmetry_Update
+AFTER UPDATE ON Friend
+FOR EACH ROW
+BEGIN
+    DELETE FROM Friend
+    WHERE ID1 = OLD.ID2 AND ID2 = OLD.ID1;
+
+    INSERT INTO Friend (ID1, ID2)
+    VALUES (NEW.ID2, NEW.ID1);
+    
+END;

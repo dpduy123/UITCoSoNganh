@@ -1,0 +1,57 @@
+\clearpage
+\section{Mô tả tổng quát ý tưởng thực hiện}
+
+\subsection{Tóm tắt ý tưởng}
+
+
+\begin{itemize}
+    \item \textbf{Tạo vòng lặp chính (Main Loop):}  
+    Shell sẽ hiển thị một \textbf{prompt} (ví dụ: \texttt{osh>}), sau đó chờ người dùng nhập lệnh.
+    Lệnh được nhập sẽ được xử lý lặp đi lặp lại đến khi người dùng nhập lệnh kết thúc (như \texttt{exit}).
+    
+    \item \textbf{Xử lý lệnh người dùng (Parsing):}  
+    Phân tách lệnh thành các \textbf{token} (từng từ hoặc chuỗi trong lệnh) để dễ dàng xử lý.
+    Kiểm tra các ký tự đặc biệt như \texttt{>}, \texttt{<}, \texttt{|} hoặc \texttt{\&} để xác định các chức năng cần thực hiện (chuyển hướng, pipe, chạy nền).
+    
+    \item \textbf{Tạo tiến trình con (Child Process):}  
+    Dùng lệnh \texttt{fork()} để tạo tiến trình con. Tiến trình con sẽ thực hiện lệnh thông qua \texttt{execvp()}.
+    Nếu không có ký tự \texttt{\&}, tiến trình cha sẽ chờ tiến trình con hoàn thành bằng lệnh \texttt{wait()}.
+    
+    \item \textbf{Hỗ trợ các tính năng nâng cao:}
+    \begin{itemize}
+        \item \textbf{Lịch sử lệnh (\texttt{!!}):}  
+        Lưu lại lệnh gần nhất và thực thi lại khi người dùng nhập \texttt{!!}. Cần xử lý trường hợp không có lệnh nào trong lịch sử.
+        
+        \item \textbf{Chuyển hướng (\texttt{<}, \texttt{>}):}  
+        \begin{itemize}
+            \item \texttt{>} : Ghi đầu ra của lệnh vào một file (\textbf{output redirection}).
+            \item \texttt{<} : Đọc đầu vào từ một file (\textbf{input redirection}).
+        \end{itemize}
+        Sử dụng hàm \texttt{dup2()} để thực hiện việc này.
+        
+        \item \textbf{Giao tiếp qua pipe (\texttt{|}):}  
+        Dùng \texttt{pipe()} để tạo kênh giao tiếp giữa hai lệnh.  
+        Ví dụ: \texttt{ls -l | less} cho phép luồng đầu ra của lệnh \texttt{ls} làm đầu vào cho lệnh \texttt{less}.
+    \end{itemize}
+    
+    \item \textbf{Tích hợp các thành phần:}  
+    Kết hợp xử lý lệnh cơ bản, lịch sử, chuyển hướng, và pipe vào trong vòng lặp chính.  
+    Bảo đảm chương trình xử lý lỗi (như lệnh không hợp lệ, thiếu tệp tin).
+    
+   
+\end{itemize}
+
+
+\subsection{Mô tả luồng xử lí}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{image2.png}
+\end{figure}
+
+% \subsection{Xây dựng các yêu cầu chính}
+% \subsubsection{Executing Command in a Child Process}
+% \textbf{Yêu Cầu:} Cho phép người dùng thực thi lệnh gần đây nhất bằng cách nhập !!. Lệnh sẽ được hiển thị lại trên màn hình và lưu vào bộ đệm lịch sử. Nếu không có lệnh nào trong lịch sử, nhập !! sẽ hiển thị thông báo "No commands in history.".
+
+% \subsubsection{Creating a History Feature}
+% \subsubsection{Redirecting Input and Output}
+% \subsubsection{Communication via a Pipe}

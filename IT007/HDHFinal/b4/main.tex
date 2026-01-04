@@ -1,0 +1,146 @@
+\clearpage
+\section{Creating a History Feature}
+\subsection{Yêu cầu cụ thể}
+\subsubsection{Đề bài}
+\begin{tcolorbox}[
+  colback=blue!5!white, 
+  colframe=blue!75!black, 
+  title=Task 2, 
+  attach boxed title to top center={
+    yshift=-2mm
+  },
+  boxrule=0.5mm,
+  width=\textwidth,
+  bottomtitle=0.5mm
+]
+
+The next task is to modify the shell interface program so that it provides a
+\textbf{\textit{history}} feature to allow a user to execute the most recent command by entering
+\texttt{!!}. For example, if a user enters the command \texttt{ls -l}, she can then execute that
+command again by entering \texttt{!!} at the prompt. Any command executed in this
+fashion should be echoed on the user’s screen, and the command should also
+be placed in the history buffer as the next command.
+Your program should also manage basic error handling. If there is no recent
+command in the history, entering \texttt{!!} should result in a message \texttt{“No commands in history.”}
+\begin{flushright}
+\textit{Page 200, Operating System Concepts 10th Edition}
+\end{flushright}
+
+\end{tcolorbox}
+
+
+\subsubsection{Mô tả đề bài}
+Đề yêu cầu ta cung cấp cho giao diện shell chức năng \textbf{\textit{history}} cho phép thực hiện câu lệnh gần đây nhất bằng cách nhập \texttt{!!}. Lệnh được thực hiện trước hết sẽ được xuất hiện trên màn hình, sau đó sẽ được đưa vào bộ đệm làm câu lệnh tiếp theo. Nếu không có câu lệnh nào trong bộ đệm, thông báo \texttt{“No commands in history.”} sẽ được xuất ra màn hình.
+
+\subsection{Hướng giải quyết}
+Viết hàm \texttt{handleHistory(char **args, int background)} để giải quyết. Lưu ý, ở đầu chương trình ta đã khai biến toàn cục \texttt{history} chứa câu lệnh gần đây nhất và liên tục cập nhật biến mỗi khi người dùng nhập vào một câu lệnh (thực hiện trong hàm main). Ta đi thực hiện câu lệnh này. Nếu \texttt{history} không chứa câu lệnh nào, thông báo \texttt{“No commands in history.”} sẽ được xuất ra màn hình. Tuy nhiên lưu ý rằng có một số trường hợp đặc biệt: 
+\begin{itemize}
+    \item Nếu \texttt{history} là một câu lệnh chứa \textbf{\&}, khi ta thực hiện câu lệnh \texttt{!! \&} sẽ tạo ra câu lệnh chứa \texttt{\& \&}, điều này là không hợp lệ.
+    \item  \texttt{history} là một câu lệnh chứa pipe (xem đề bài phần để hiểu pipe là gì).
+\end{itemize}
+
+Chi tiết về hàm \texttt{handleHistory(char **args, int background)} được mô tả ở mục \textbf{3} cùng chương.
+
+\subsection{Hàm handleHistory - chức năng history}
+\subsubsection{Input}
+\begin{itemize}
+    \item  Mảng \texttt{args} chứa các tham số lệnh mà người dùng đã nhập, trong đó phần tử đầu tiên là \texttt{"!!"} để gọi lệnh gần nhất từ lịch sử.
+    \item Biến \texttt{background} là cờ boolean (giá trị 0 hoặc 1) để xác định lệnh có thực thi nền (background) hay không. Giá trị này được xác định dựa vào việc người dùng có nhập ký tự \texttt{\&} trong lệnh hay không.
+\end{itemize}
+
+
+\subsubsection{Output}
+
+Hàm không trả về giá trị, nhưng sẽ thực hiên câu lệnh gần nhất được lưu trữ trong \texttt{history} nếu có với tham số tương ứng. Nếu không có lệnh nào, chương trình hiển thị thông báo \texttt{"No commands in history."} và không thực thi gì thêm.
+
+\subsubsection{Hướng giải thuật giải quyết}
+Hàm \texttt{handleHistory} được thiết kế để xử lý lệnh \texttt{"!!"} và thực thi lệnh gần nhất như sau:
+
+\begin{enumerate}
+    \item \textbf{Kiểm tra trạng thái lịch sử:} 
+        \begin{itemize}
+            \item Nếu biến \texttt{history} rỗng (tức không có lệnh trong lịch sử), in ra thông báo \texttt{"No commands in history."} và kết thúc hàm.
+        \end{itemize}
+
+    \item \textbf{Kiểm tra lệnh thực thi nền:} 
+        \begin{itemize}
+            \item Nếu cờ \texttt{background} bật (người dùng nhập \texttt{"!! \&"}), kiểm tra xem lệnh trong lịch sử có chứa ký tự \texttt{\&} hay không.
+            \item Nếu lịch sử đã chứa ký tự \texttt{\&}, thông báo lỗi \texttt{"Error: command \& \&"} và kết thúc hàm.
+        \end{itemize}
+    
+    \item \textbf{Hiển thị lệnh đang thực thi:} In ra thông báo \texttt{"Executing last command: "} kèm nội dung của \texttt{history}.
+
+    \item \textbf{Phân tích lệnh trong lịch sử:}
+        \begin{itemize}
+            \item Sử dụng hàm \texttt{parseInput} để tách lệnh trong \texttt{history} thành các token và lưu vào mảng \texttt{historyArgs}.
+        \end{itemize}
+    
+    \item \textbf{Kiểm tra lệnh có ống (pipe):} 
+        \begin{itemize}
+            \item Duyệt qua mảng \texttt{historyArgs} để kiểm tra sự hiện diện của ký tự \texttt{"|"}.
+            \item Nếu có, xác định vị trí ký tự \texttt{"|"} để chia lệnh thành hai phần.
+        \end{itemize}
+    
+    \item \textbf{Thực thi lệnh:}
+        \begin{itemize}
+            \item Nếu lệnh có ống, tách thành hai phần lệnh và gọi hàm \texttt{executePipe} để xử lý.
+            \item Nếu lệnh không có ống, gọi hàm \texttt{executeCommandWithRedirection} để xử lý lệnh, bao gồm cả các thao tác chuyển hướng (nếu có).
+        \end{itemize}
+\end{enumerate}
+
+\subsubsection{Lưu đồ thuật toán}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{handhistory.png}
+\end{figure}
+
+\subsubsection{Code}
+\begin{lstlisting}
+void handleHistory(char **args, int background) {
+    if (strlen(history) == 0) {
+        printf("No commands in history.\n");
+        return;
+    }
+
+    if (background) { // Truong hop `!! &`
+        if (strstr(history, "&") != NULL) { 
+            printf("Error: command & &\n");
+            return;
+        }
+    }
+    printf("Executing last command: %s\n", history);
+
+    // Xu li lenh gan day nhat
+    char *historyArgs[MAX_LINE / 2 + 1];
+    parseInput(history, historyArgs);
+
+    for (int i = 0; historyArgs[i] != NULL; i++) {
+        if (strcmp(historyArgs[i], "&") == 0) {
+            background = 1;
+            historyArgs[i] = NULL;
+        }
+    }
+    
+    int pipeIndex = -1;
+    for (int i = 0; historyArgs[i] != NULL; i++) {
+        if (strcmp(historyArgs[i], "|") == 0) {
+            pipeIndex = i;
+            break;
+        }
+    }
+    if (pipeIndex != -1) { // Neu lenh co pipe
+        historyArgs[pipeIndex] = NULL;
+        char *args1[MAX_LINE / 2 + 1];
+        char *args2[MAX_LINE / 2 + 1];
+        // Tach lenh hai ben dau ong
+        memcpy(args1, historyArgs, pipeIndex * sizeof(char *));
+        args1[pipeIndex] = NULL;
+        parseInput(history + (historyArgs[pipeIndex + 1] - history), args2);
+        executePipe(args1, args2, background);
+    } else {
+        executeCommandWithRedirection(historyArgs, background);
+    }
+}
+
+\end{lstlisting}
+

@@ -1,0 +1,119 @@
+\clearpage
+\section{ Communication via a Pipe}
+\subsection{Yêu cầu cụ thể}
+\subsubsection{Đề bài}
+\begin{tcolorbox}[
+  colback=blue!5!white, 
+  colframe=blue!75!black, 
+  title=Task 4, 
+  attach boxed title to top center={
+    yshift=-2mm
+  },
+  boxrule=0.5mm,
+  width=\textwidth,
+  bottomtitle=0.5mm
+]
+The final modification to your shell is to allow the output of one command to
+serve as input to another using a pipe. For example, the following command
+sequence
+\begin{center}
+\texttt{osh> ls -l | less}
+\end{center}
+has the output of the command \texttt{ls -l} serve as the input to the \texttt{less} command. Both the \texttt{ls} and \texttt{less} commands will run as separate processes and
+will communicate using the UNIX \texttt{pipe()} function described in Section 3.7.4.
+Perhaps the easiest way to create these separate processes is to have the parent
+process create the child process (which will execute \texttt{ls -l}). This child will also
+create another child process (which will execute \texttt{less}) and will establish a pipe
+between itself and the child process it creates. Implementing pipe functionality
+will also require using the \texttt{dup2()} function as described in the previous section.
+Finally, although several commands can be chained together using multiple
+pipes, you can assume that commands will contain only one pipe character
+and will not be combined with any redirection operators.
+
+\begin{flushright}
+\textit{Page 201, Operating System Concepts 10th Edition}
+\end{flushright}
+
+\end{tcolorbox}
+
+\subsubsection{Mô tả đề bài}
+Đề bài yêu cầu chỉnh sửa shell để hỗ trợ chức năng chuyển hướng đầu ra của một lệnh thành đầu vào của lệnh khác thông qua ống (\texttt{pipe}). 
+Ví dụ, khi người dùng gõ: \texttt{osh> ls -l | less}, đầu ra của lệnh \texttt{ls -l} sẽ được sử dụng làm đầu vào cho lệnh \texttt{less}. Cả hai lệnh sẽ chạy như các tiến trình riêng biệt và giao tiếp qua hàm \texttt{pipe()} trong hệ điều hành Unix. Các lệnh có thể được kết nối với nhau bằng nhiều ống, nhưng giả sử rằng mỗi lệnh chỉ chứa một ký tự ống và không kết hợp với các toán tử chuyển hướng đầu vào/đầu ra.
+
+\subsection{Hướng giải quyết}
+Viết hàm \texttt{executePipe(char **args1, char **args2, int background)} để giải quyết. Trong đó, \texttt{args1},  \texttt{args2} là hai câu lệnh trong câu lệnh ban đầu. Để thực hiện yêu cầu bài toán, ta tạo một tiến trình con từ tiến trình cha thực thi lệnh đầu tiên. Sau đó tiến trình con này sẽ tạo thêm một tiến trình con nữa để thực thi câu lệnh tiếp theo và thiết lập một ống giữa hai tiến trình con. Bên cạnh đó, ta sử dụng hàm \texttt{dup2()} để chuyển hướng đầu vào và đầu ra.
+\subsection{Hàm executePipe}
+\subsubsection{Input}
+\begin{itemize}
+    \item \texttt{args1}: Một mảng các chuỗi đại diện cho các đối số của lệnh đầu tiên trong pipeline .
+    \item \texttt{args2}: Một mảng các chuỗi đại diện cho các đối số của lệnh thứ hai trong pipeline .
+    \item \texttt{background}: Một giá trị boolean cho biết lệnh có được thực thi trong chế độ nền hay không.
+\end{itemize}
+\subsubsection{Output}
+Hàm không trả về giá trị nào, nhưng sẽ thực hiện việc thực thi các lệnh \texttt{args1} và \texttt{args2} trong hai tiến trình con riêng biệt, với đầu ra của lệnh \texttt{args1} được chuyển thành đầu vào cho lệnh \texttt{args2} thông qua một ống (pipe). 
+
+\subsubsection{Hướng giải thuật giải quyết}
+Hàm \texttt{executePipe} thực hiện theo các bước sau:
+\begin{enumerate}
+    \item Tạo một ống (pipe) mới với \texttt{pipe(fd)}.
+    \item Tiến hành fork ra một tiến trình con đầu tiên (pid1) để thực thi lệnh đầu tiên:
+    \begin{itemize}
+        \item Đoạn mã trong tiến trình con này sử dụng \texttt{dup2(fd[1], STDOUT\_FILENO)} để thay đổi đầu ra chuẩn của lệnh đầu tiên, chuyển hướng nó vào ống.
+        \item Sau đó, lệnh được thực thi bằng \texttt{execvp}.
+    \end{itemize}
+    \item Fork ra một tiến trình con thứ hai (pid2) để thực thi lệnh thứ hai:
+    \begin{itemize}
+        \item Đoạn mã trong tiến trình con này sử dụng \texttt{dup2(fd[0], STDIN\_FILENO)} để thay đổi đầu vào chuẩn của lệnh thứ hai, lấy nó từ ống.
+        \item Sau đó, lệnh được thực thi bằng \texttt{execvp}.
+    \end{itemize}
+    \item Sau khi hai tiến trình con được tạo ra, tiến trình cha sẽ đóng các mô tả tập tin ống.
+    \item Cuối cùng, nếu lệnh không được thực thi trong nền (\texttt{background} = 0), tiến trình cha chờ cả hai tiến trình con hoàn thành bằng \texttt{waitpid}.
+\end{enumerate}
+
+\subsubsection{Lưu đồ thuật toán}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{redirectio.png}
+   
+\end{figure}
+
+\subsubsection{Code}
+\begin{lstlisting}
+void executePipe(char **args1, char **args2, int background) {
+    int fd[2];
+    pipe(fd);
+    pid_t pid1 = fork();
+
+    if (pid1 == 0) {
+        dup2(fd[1], STDOUT_FILENO);
+        close(fd[0]);
+        close(fd[1]);
+        handleRedirection(args1);
+        execvp(args1[0], args1);
+        perror("Error in pipe execution");
+        exit(1);
+    }
+
+    pid_t pid2 = fork();
+
+    if (pid2 == 0) {
+        dup2(fd[0], STDIN_FILENO);
+        close(fd[1]);
+        close(fd[0]);
+        handleRedirection(args2);
+        execvp(args2[0], args2);
+        perror("Error in pipe execution");
+        exit(1);
+    }
+
+    close(fd[0]);
+    close(fd[1]);
+
+    if (!background) {
+        waitpid(pid1, NULL, 0);
+        waitpid(pid2, NULL, 0);
+    }
+}
+\end{lstlisting}
+
+
